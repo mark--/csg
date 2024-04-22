@@ -2,7 +2,6 @@ package de.markschaefer.csg
 
 import de.markschaefer.csg.Matrix.Companion.identity
 import de.markschaefer.csg.Matrix.Companion.mirrorY
-import de.markschaefer.csg.Matrix.Companion.rotate
 import de.markschaefer.csg.Matrix.Companion.rotateDegrees
 import de.markschaefer.csg.Matrix.Companion.scale
 import de.markschaefer.csg.Matrix.Companion.translate
@@ -10,9 +9,9 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
-import javax.swing.JFrame
-import javax.swing.JPanel
-import javax.swing.JSlider
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -28,17 +27,38 @@ class MainWindow : JFrame("CSG") {
         isVisible = true
         layout = BorderLayout(10, 10)
 
-        val rotSlider = JSlider(-360, 360, 0)
-        rotSlider.addChangeListener { updateRotation(rotSlider.value) }
-        add(rotSlider, BorderLayout.NORTH)
+        SwingUtilities.invokeLater {
+            val rotSlider = JSlider(-360, 360, 0)
+            rotSlider.addChangeListener { updateRotation(rotSlider.value) }
+            add(rotSlider, BorderLayout.NORTH)
 
-        add(shapeRenderer, BorderLayout.CENTER)
-        pack()
+            val logText = JTextArea(5, 100)
 
-        addMouseWheelListener { event -> updateZoom(zoom + event.wheelRotation) }
-        updateZoom(zoom)
+            shapeRenderer.addMouseMotionListener(object : MouseAdapter() {
+                override fun mouseMoved(e: MouseEvent) {
 
-        setLocationRelativeTo(null)
+                    val i = (shapeRenderer.matrix * mirrorY()).inverse()
+                    val model = i * Vector(e.x.toDouble(), e.y.toDouble())
+
+                    logText.text = """
+                    Viewport coordinates: (${e.x}, ${e.y})
+                    Model coordinates: (${model.x.format(3)}, ${model.y.format(3)})
+                """.trimIndent()
+                }
+            })
+
+            add(shapeRenderer, BorderLayout.CENTER)
+
+            addMouseWheelListener { event -> updateZoom(zoom + event.wheelRotation) }
+            updateZoom(zoom)
+
+
+            logText.isEditable = false
+            add(logText, BorderLayout.SOUTH)
+
+            pack()
+            setLocationRelativeTo(null)
+        }
     }
 
     private fun updateZoom(zoom: Int) {
