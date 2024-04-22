@@ -95,10 +95,29 @@ class ShapeRenderer : JPanel() {
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
-
         if (grid) drawGrid(g)
 
         shapes.forEach { draw(g, it.component1(), it.component2()) }
+    }
+
+
+    private fun draw(g: Graphics, shape: Shape, color: Color) {
+        g.color = color
+        val res = matrix * mirrorY() * shape
+        res.loops.forEach {
+            for (i in 0..<it.points.size) {
+                val start = it.points[i]
+                val end = it.points[(i + 1) % it.points.size]
+                g.drawLine(start.x.toInt(), start.y.toInt(), end.x.toInt(), end.y.toInt())
+            }
+        }
+
+        res.boundingBox().grid(1.0, 1.0)
+            .filter { res.contains(it) }
+            .forEach {
+                g.drawRect(it.x.toInt(), it.y.toInt(), 1, 1)
+            }
+
     }
 
     private fun drawGrid(g: Graphics) {
@@ -123,26 +142,6 @@ class ShapeRenderer : JPanel() {
             val unitEnd = res * Vector(0.1, y.toDouble())
             g.drawLine(unitStart.x.toInt(), unitStart.y.toInt(), unitEnd.x.toInt(), unitEnd.y.toInt());
         }
-    }
-
-    private fun draw(g: Graphics, shape: Shape, color: Color) {
-        val res = matrix * mirrorY()
-        g.color = color
-        shape.loops.forEach { loop ->
-            for (i in 0..<loop.points.size) {
-                val start = res * loop.points[i]
-                val end = res * loop.points[(i + 1) % loop.points.size]
-                g.drawLine(start.x.toInt(), start.y.toInt(), end.x.toInt(), end.y.toInt())
-            }
-        }
-
-        shape.boundingBox().grid(0.02, 0.02)
-            .filter { shape.contains(it) }
-            .forEach {
-                val r = res * it
-                g.drawRect(r.x.toInt(), r.y.toInt(), 1, 1)
-            }
-
     }
 
     override fun getPreferredSize(): Dimension {
