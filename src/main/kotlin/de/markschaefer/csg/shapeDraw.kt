@@ -19,8 +19,8 @@ import kotlin.math.min
 class MainWindow : JFrame("CSG") {
     val shapeRenderer = ShapeRenderer()
 
-    private var zoom = 75;
-    private var angle = 0;
+    private var zoom = 75
+    private var angle = 0
 
     init {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE)
@@ -90,7 +90,7 @@ class ShapeRenderer : JPanel() {
     }
 
     fun addShape(shape: Shape, color: Color = Color.RED) {
-        shapes[shape] = color;
+        shapes[shape] = color
     }
 
     override fun paintComponent(g: Graphics) {
@@ -112,7 +112,7 @@ class ShapeRenderer : JPanel() {
             }
         }
 
-        res.boundingBox().grid(1.0, 1.0)
+        res.boundingBox().grid()
             .filter { res.contains(it) }
             .forEach {
                 g.drawRect(it.x.toInt(), it.y.toInt(), 1, 1)
@@ -135,12 +135,12 @@ class ShapeRenderer : JPanel() {
         for (x in -100..100) {
             val unitStart = res * Vector(x.toDouble(), 0.0)
             val unitEnd = res * Vector(x.toDouble(), 0.1)
-            g.drawLine(unitStart.x.toInt(), unitStart.y.toInt(), unitEnd.x.toInt(), unitEnd.y.toInt());
+            g.drawLine(unitStart.x.toInt(), unitStart.y.toInt(), unitEnd.x.toInt(), unitEnd.y.toInt())
         }
         for (y in -100..100) {
             val unitStart = res * Vector(0.0, y.toDouble())
             val unitEnd = res * Vector(0.1, y.toDouble())
-            g.drawLine(unitStart.x.toInt(), unitStart.y.toInt(), unitEnd.x.toInt(), unitEnd.y.toInt());
+            g.drawLine(unitStart.x.toInt(), unitStart.y.toInt(), unitEnd.x.toInt(), unitEnd.y.toInt())
         }
     }
 

@@ -5,8 +5,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 data class BoundingBox(val xMin: Double, val yMin: Double, val xMax: Double, val yMax: Double) {
-    fun with(point: Vector) = BoundingBox(min(xMin, point.x), min(yMin, point.y), max(xMax, point.x), max(yMax, point.y))
-    fun with(other: BoundingBox) = BoundingBox(min(xMin, other.xMin), min(yMin, other.yMin), max(xMax, other.xMax), max(yMax, other.yMax))
+    fun with(point: Vector) =
+        BoundingBox(min(xMin, point.x), min(yMin, point.y), max(xMax, point.x), max(yMax, point.y))
+
+    fun with(other: BoundingBox) =
+        BoundingBox(min(xMin, other.xMin), min(yMin, other.yMin), max(xMax, other.xMax), max(yMax, other.yMax))
 
     fun toShape() = shape {
         loop {
@@ -17,7 +20,7 @@ data class BoundingBox(val xMin: Double, val yMin: Double, val xMax: Double, val
         }
     }
 
-    fun grid(xResolution: Double = 0.1, yResolution: Double = 0.1): List<Vector> {
+    fun grid(xResolution: Double = 1.0, yResolution: Double = 1.0): List<Vector> {
         val result = mutableListOf<Vector>()
         var x = xMin
         while (x <= xMax) {
