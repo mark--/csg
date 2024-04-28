@@ -1,5 +1,6 @@
 package de.markschaefer.csg
 
+import java.lang.Math.pow
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -12,15 +13,29 @@ data class Vector(val x: Double, val y: Double) {
     override fun toString(): String = "($x, $y)"
     operator fun times(other: Vector) = dotProduct(arrayOf(x, y), arrayOf(other.x, other.y))
     operator fun times(scalar: Double) = Vector(x * scalar, y * scalar)
+    operator fun times(scalar: Int) = Vector(x * scalar, y * scalar)
     operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)
     operator fun minus(other: Vector) = Vector(x - other.x, y - other.y)
+
+    operator fun unaryMinus() = Vector(-x, -y)
 
     fun crossProduct(other: Vector) = this.x * other.y - this.y * other.x
 
     fun normalised() = Vector(x, y, sqrt(x * x + y * y))
 
     fun angle(other: Vector) = atan2(this.crossProduct(other), this * other)
+
+    fun distance(other: Vector) = sqrt(pow(x - other.x, 2.0) + pow(y - other.y, 2.0))
+
+    companion object {
+        val ORIGIN = Vector(0.0, 0.0)
+        val X = Vector(1.0, 0.0)
+        val Y = Vector(0.0, 1.0)
+    }
 }
+
+operator fun Int.times(vector: Vector) = Vector(this * vector.x, this * vector.y)
+operator fun Double.times(vector: Vector) = Vector(this * vector.x, this * vector.y)
 
 class Matrix(private vararg val entries: Double) {
     init {
@@ -81,7 +96,9 @@ class Matrix(private vararg val entries: Double) {
         fun mirrorY() = Matrix(1.0, 0.0, 0.0,/**/ 0.0, -1.0, 0.0,/**/ 0.0, 0.0, 1.0)
         fun scale(scale: Double) = Matrix(scale, 0.0, 0.0,/**/ 0.0, scale, 0.0,/**/ 0.0, 0.0, 1.0)
         fun translate(x: Double, y: Double) = Matrix(1.0, 0.0, x,/**/ 0.0, 1.0, y,/**/ 0.0, 0.0, 1.0)
-        fun rotate(angle: Double) = Matrix(cos(angle), sin(angle), 0.0,/**/ -sin(angle), cos(angle), 0.0,/**/ 0.0, 0.0, 1.0)
+        fun rotate(angle: Double) =
+            Matrix(cos(angle), sin(angle), 0.0,/**/ -sin(angle), cos(angle), 0.0,/**/ 0.0, 0.0, 1.0)
+
         fun rotateDegrees(angle: Int) = rotate(angle * 2 * PI / 360)
     }
 
@@ -100,6 +117,54 @@ class Matrix(private vararg val entries: Double) {
     override fun hashCode(): Int {
         return entries.contentHashCode()
     }
+}
+
+sealed class IntersectionResult {
+    data object NoIntersection : IntersectionResult()
+    data class Point(val value: Vector, val t: Double) : IntersectionResult()
+    data class Line(val start: Vector, val end: Vector) : IntersectionResult()
+}
+
+
+data class Line(val start: Vector, val toEnd: Vector) {
+
+    companion object {
+        fun lineFromTo(start: Vector, end: Vector) = Line(start, end - start)
+    }
+
+    val end: Vector
+        get() = start + toEnd
+
+    fun intersection(other: Line): IntersectionResult {
+        val r = this.toEnd
+        val s = other.toEnd
+        val d = r.crossProduct(s)
+
+        if (d == 0.0) {
+            // Lines are parallel or collinear
+            if ((other.start - this.start).crossProduct(r) == 0.0) {
+                // Collinear lines
+                return IntersectionResult.NoIntersection  // Adjust logic here for overlapping if necessary
+            } else {
+                // Parallel but not collinear
+                return IntersectionResult.NoIntersection
+            }
+        } else {
+            // Non-parallel lines, calculate potential intersection point
+            val t = (other.start - this.start).crossProduct(s) / d
+            if (t.isFinite()) {
+                val intersectionPoint = this.start + r * t
+                // Verify if the point is on the other line segment as well
+                val u = ((intersectionPoint - other.start) * s) / (s * s)
+                if (u in 0.0..1.0) {
+                    return IntersectionResult.Point(intersectionPoint, t)
+                }
+            }
+            return IntersectionResult.NoIntersection
+        }
+    }
+
+
 }
 
 

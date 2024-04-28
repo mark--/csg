@@ -112,11 +112,15 @@ class ShapeRenderer : JPanel() {
             }
         }
 
-        res.boundingBox().grid()
-            .filter { res.contains(it) }
-            .forEach {
-                g.drawRect(it.x.toInt(), it.y.toInt(), 1, 1)
-            }
+//        res.boundingBox().grid(11.0, 11.0)
+//            .filter { res.contains(it) }
+//            .forEach {
+//                g.fillRect(it.x.toInt() - 5, it.y.toInt() - 5, 11, 11)
+//            }
+
+        res.boundingBox().scanlines().flatMap { res.scanlines(it) }.forEach {
+            g.drawLine(it.start.x.toInt(), it.start.y.toInt(), it.end.x.toInt(), it.end.y.toInt())
+        }
 
     }
 

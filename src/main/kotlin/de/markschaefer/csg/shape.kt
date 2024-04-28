@@ -1,5 +1,8 @@
 package de.markschaefer.csg
 
+import de.markschaefer.csg.IntersectionResult.NoIntersection
+import de.markschaefer.csg.IntersectionResult.Point
+import de.markschaefer.csg.Line.Companion.lineFromTo
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
@@ -19,6 +22,9 @@ data class BoundingBox(val xMin: Double, val yMin: Double, val xMax: Double, val
             point(xMin, yMax)
         }
     }
+
+    fun scanlines(resolution: Int = 1) =
+        (yMin.toInt()..yMax.toInt()).map { lineFromTo(Vector(xMin, it.toDouble()), Vector(xMax, it.toDouble())) }
 
     fun grid(xResolution: Double = 1.0, yResolution: Double = 1.0): List<Vector> {
         val result = mutableListOf<Vector>()
@@ -50,6 +56,13 @@ data class Loop(val points: List<Vector>) {
     }
 
     fun boundingBox() = points.drop(1).fold(BoundingBox.from(points[0]), BoundingBox::with)
+
+    fun lines() = points.plus(points[0]).zipWithNext().map { lineFromTo(it.first, it.second) }
+}
+
+fun <T> T.log(): T {
+    println(this)
+    return this
 }
 
 data class Shape(val loops: List<Loop>) {
@@ -64,6 +77,19 @@ data class Shape(val loops: List<Loop>) {
     }
 
     fun boundingBox() = loops.drop(1).fold(loops[0].boundingBox()) { a, b -> a.with(b.boundingBox()) }
+
+    fun scanlines(line: Line): List<Line> {
+        val intersections = loops.flatMap(Loop::lines).map(line::intersection)
+
+        return intersections
+            .asSequence()
+            .filterIsInstance<Point>()
+            .sortedBy { it.t }
+            .map(Point::value)
+            .windowed(2, 2)
+            .map { lineFromTo(it[0], it[1]) }
+            .toList()
+    }
 
 }
 
